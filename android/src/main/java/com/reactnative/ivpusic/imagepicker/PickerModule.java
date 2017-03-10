@@ -30,7 +30,7 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.PermissionAwareActivity;
 import com.facebook.react.modules.core.PermissionListener;
-import com.yalantis.ucrop.UCrop;
+import com.soundcloud.android.crop.Crop;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -526,34 +526,9 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
         return image;
     }
 
-    private void configureCropperColors(UCrop.Options options) {
-        int color = Color.parseColor(cropperTintColor);
-        options.setToolbarColor(color);
-        options.setStatusBarColor(color);
-        if (cropperTintColor.equals(DEFAULT_TINT)) {
-            /*
-            Default tint is grey => use a more flashy color that stands out more as the call to action
-            Here we use 'Light Blue 500' from https://material.google.com/style/color.html#color-color-palette
-            */
-            options.setActiveWidgetColor(Color.parseColor(DEFAULT_WIDGET_COLOR));
-        } else {
-            //If they pass a custom tint color in, we use this for everything
-            options.setActiveWidgetColor(color);
-        }
-    }
-
     private void startCropping(Activity activity, Uri uri) {
-        UCrop.Options options = new UCrop.Options();
-        options.setCompressionFormat(Bitmap.CompressFormat.JPEG);
-        options.setCompressionQuality(100);
-        options.setCircleDimmedLayer(cropperCircleOverlay);
-        configureCropperColors(options);
-
-        UCrop.of(uri, Uri.fromFile(new File(this.getTmpDir(activity), UUID.randomUUID().toString() + ".jpg")))
-                .withMaxResultSize(width, height)
-                .withAspectRatio(width, height)
-                .withOptions(options)
-                .start(activity);
+        Crop.of(uri, Uri.fromFile(new File(this.getTmpDir(activity), UUID.randomUUID().toString() + ".jpg")))
+          .start(activity);
     }
 
     private void imagePickerResult(Activity activity, final int requestCode, final int resultCode, final Intent data) {
@@ -611,8 +586,6 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
             }
 
             if (cropping) {
-                UCrop.Options options = new UCrop.Options();
-                options.setCompressionFormat(Bitmap.CompressFormat.JPEG);
                 startCropping(activity, uri);
             } else {
                 try {
@@ -626,7 +599,7 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
 
     private void croppingResult(Activity activity, final int requestCode, final int resultCode, final Intent data) {
         if (data != null) {
-            final Uri resultUri = UCrop.getOutput(data);
+            final Uri resultUri = Crop.getOutput(data);
             if (resultUri != null) {
                 try {
                     resultCollector.notifySuccess(getSelection(activity, resultUri, false));
@@ -647,7 +620,7 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
             imagePickerResult(activity, requestCode, resultCode, data);
         } else if (requestCode == CAMERA_PICKER_REQUEST) {
             cameraPickerResult(activity, requestCode, resultCode, data);
-        } else if (requestCode == UCrop.REQUEST_CROP) {
+        } else {
             croppingResult(activity, requestCode, resultCode, data);
         }
     }
